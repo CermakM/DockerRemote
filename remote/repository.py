@@ -18,6 +18,9 @@ class Tag(dict):
         "size in MB, str"
 
     def __str__(self):
+        if self['namespace'] == 'library':
+            return "{s[repository_name]}:{s[name]}".format(s=self)
+
         return "{s[namespace]}/{s[repository_name]}:{s[name]}".format(s=self)
 
 

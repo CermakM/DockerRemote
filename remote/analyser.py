@@ -13,7 +13,7 @@ DOCKER_LOGIN_URL = 'https://hub.docker.com/v2/users/login/'
 
 class DockerAnalyser:
 
-    def __init__(self, repository, namespace="", search=False, url="", token=None, debug=False):
+    def __init__(self, repository, namespace="library", search=False, url="", token=None, debug=False):
         """Initialize Docker analyser to handle http requests"""
         # Disable warnings
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -85,14 +85,12 @@ class DockerAnalyser:
         return count, repo_list
 
     @staticmethod
-    def repo_to_url(repository, namespace="", site='repositories'):
+    def repo_to_url(repository, namespace, site='repositories'):
 
-        if namespace:
-            namespace += '/'
-        return "{base}{site}/{namespace}{repo}/".format(base=DOCKER_BASE_URL,
-                                                        site=site,
-                                                        namespace=namespace,
-                                                        repo=repository)
+        return "{base}{site}/{namespace}/{repo}/".format(base=DOCKER_BASE_URL,
+                                                         site=site,
+                                                         namespace=namespace,
+                                                         repo=repository)
 
     def _get_repository(self) -> DockerRepository:
         """
@@ -174,10 +172,9 @@ class DockerAnalyser:
         """
         if tag_name not in self.repository.tags:
             # TODO LOG, add did you mean?
-            namespace = self.namespace + '/' if self.namespace else ""
-            msg = "Tag {namespace}{repo}:{tag} does not exist".format(
+            msg = "Tag {namespace}/{repo}:{tag} does not exist".format(
                 tag=tag_name,
-                namespace=namespace,
+                namespace=self.namespace,
                 repo=self.repository_name
             )
             raise KeyError(msg)

@@ -27,9 +27,10 @@ class ExceptionHandler:
 class DockerManager:
     """Docker manager class"""
 
-    def __init__(self, repository, namespace="", search=False, url=None,
+    def __init__(self, repository, namespace="library", search=False, url=None,
                  username=None, password=None, verbose=True,
                  debug=False):
+
         self.namespace = namespace
         self.repository_name = repository
 
@@ -80,12 +81,12 @@ class DockerManager:
         pass
 
     def print_namespace(self):
-        if self.namespace:
-            print("Docker Hub remote repository: "
-                  "{s.namespace}/{s.repository_name}\n".format(s=self))
-        else:
+        if self.namespace == 'library':
             print("Docker Hub remote repository: "
                   "{s.repository_name}\n".format(s=self))
+        else:
+            print("Docker Hub remote repository: "
+                  "{s.namespace}/{s.repository_name}\n".format(s=self))
 
     def print_description(self, short=True, full=False):
         description = self.analyser.get_description()
@@ -135,9 +136,15 @@ class DockerManager:
         if count is None:
             count = len(tags)
 
+        key_maxlen = max(len(tag.__str__()) for tag in tags)
+        header_str = "{:<{maxlen}} | {:^10}| {:^.10}".format(
+            "TAG", "SIZE", "UPDATED AT", maxlen=key_maxlen)
+
+        print(header_str)
+        print("{:-<{len}}".format("", len=len(header_str)))
         for tag in tags[:count]:
-            print("{t},  size: {t[size_mb]},  updated: {t[last_updated]}"
-                  .format(t=tag))
+            print("{:<{maxlen}} | {:^10}| {:.10}"
+                  .format(tag.__str__(), tag['size_mb'], tag['last_updated'], maxlen=key_maxlen))
 
         print('\n')
 

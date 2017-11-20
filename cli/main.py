@@ -1,6 +1,7 @@
 """Command line interface for Docker Remote Manager"""
 
 import argparse
+import sys
 
 from manager import DockerManager
 
@@ -115,12 +116,15 @@ def main():
     args = parser.parse_args()
 
     # Set up parsed arguments
-    namespace, repository = "", ""
+    namespace, repository = "library", ""
     repository_split = args.repository.split('/')
     if len(repository_split) == 2:
         namespace, repository = repository_split
     else:
         repository, = repository_split
+        print("[WARNING]: namespace not provided, "
+              "searching for official repositories",
+              file=sys.stderr)
 
     if args.login is not None:
         username, password = args.login.split(':')
@@ -157,6 +161,9 @@ def main():
                 hub.print_tag_info(args.tag)
             else:
                 hub.print_tags(args.count)
+        elif args.remove:
+            # TODO
+            print("TODO")
 
     elif args.command == 'search':
 
