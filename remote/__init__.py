@@ -1,2 +1,2 @@
-from .Analyser import DockerAnalyser
-from .Repository import DockerRepository, Tag
+from .analyser import DockerAnalyser
+from .repository import DockerRepository, Tag

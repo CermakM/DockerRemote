@@ -1,1 +1,1 @@
-from .Manager import DockerManager
+from .manager import DockerManager

@@ -27,7 +27,7 @@ class ExceptionHandler:
 class DockerManager:
     """Docker manager class"""
 
-    def __init__(self, repository, namespace="", url=None,
+    def __init__(self, repository, namespace="", search=False, url=None,
                  username=None, password=None, verbose=True,
                  debug=False):
         self.namespace = namespace
@@ -43,7 +43,9 @@ class DockerManager:
         # Initialize analyser
         self.analyser = DockerAnalyser(repository=repository,
                                        namespace=namespace,
-                                       url=url)
+                                       search=search,
+                                       url=url,
+                                       debug=debug)
 
         self.token = None
         if self.username:
@@ -55,6 +57,27 @@ class DockerManager:
 
         self.analyser.set_credentials(username, password)
         self.token = self.analyser.request_token()
+
+    def search(self, query, count=None):
+        num_results, repo_list = self.analyser.query(query)
+        # TODO handle printing multiple pages
+        print("Number of results: {}\n".format(num_results))
+
+        count = min(len(repo_list), count) if count else len(repo_list)
+
+        max_key_len = max(len(res[0]) for res in repo_list)
+
+        for i in range(count):
+            repo = repo_list[i]
+            print("{repo:<{keylen}} : {description}\n".format(
+                keylen=max_key_len,
+                repo=repo[0],
+                description=repo[1]
+            ))
+
+    def search_by_user(self, user, query):
+        # TODO
+        pass
 
     def print_namespace(self):
         if self.namespace:

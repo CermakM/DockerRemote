@@ -34,7 +34,17 @@ def main():
     subparsers = parser.add_subparsers(dest='command',
                                        description="Docker Manager sub commands")
 
-    # Sub parser for list-description sub command
+    # Search parser for search sub command
+    parser_search = subparsers.add_parser('search',
+                                          help="Search Docker Hub repository")
+
+    parser_search.add_argument(
+        '-n', '--count', action='store',
+        help="Limit number of pages of search results."
+             "By default only first page is printed."  # TODO
+    )
+
+    # Sub parser for description sub command
     parser_description = subparsers.add_parser('description',
                                                help="Manage Docker Hub "
                                                     "repository description")
@@ -61,8 +71,7 @@ def main():
     )
 
     # Sub parser for tags sub command
-    parser_tags = subparsers.add_parser('tags', help="Manage tags "
-                                                     "in Docker Hub repository")
+    parser_tags = subparsers.add_parser('tags', help="Manage Docker Hub repository tags")
 
     parser_tags.add_argument(
         '-l', '--list', action='store_true', default=True,
@@ -119,13 +128,19 @@ def main():
         username, password = None, None
 
     verbose = not args.silent
+    # Necessary to avoid creating repository
+    is_search = args.command == 'search'
 
     hub = DockerManager(repository=repository, namespace=namespace,
+                        search=is_search,
                         username=username, password=password,
                         verbose=verbose, debug=True)  # FIXME - turn off debug
 
-    if not args.silent:
+    if not args.silent and not is_search:
         hub.print_namespace()
+
+    if is_search:
+        print("Searching Docker Hub repository for: %s\n" % args.repository)
 
     # Choose from list actions
     if args.command == 'description':
@@ -142,6 +157,10 @@ def main():
                 hub.print_tag_info(args.tag)
             else:
                 hub.print_tags(args.count)
+
+    elif args.command == 'search':
+
+        hub.search(args.repository, args.count)
 
 
 if __name__ == '__main__':

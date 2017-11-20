@@ -5,7 +5,7 @@ import json
 
 import urllib3
 
-from .Repository import DockerRepository, Tag
+from .repository import DockerRepository, Tag
 
 DOCKER_BASE_URL = 'https://hub.docker.com/v2/'
 DOCKER_LOGIN_URL = 'https://hub.docker.com/v2/users/login/'
@@ -13,15 +13,16 @@ DOCKER_LOGIN_URL = 'https://hub.docker.com/v2/users/login/'
 
 class DockerAnalyser:
 
-    def __init__(self, repository, namespace="", url="", token=None):
+    def __init__(self, repository, namespace="", search=False, url="", token=None, debug=False):
         """Initialize Docker analyser to handle http requests"""
         # Disable warnings
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-        self.namespace = namespace
         self.repository_name = repository
+        self.namespace = namespace
         self.url = url
         self.token = token
+        self.debug = debug
         self.login = ""
 
         # Initialize controls
@@ -30,7 +31,8 @@ class DockerAnalyser:
         self.response = None
 
         # Get repository
-        self.repository = self._get_repository()  # Repository object
+        if not search:
+            self.repository = self._get_repository()  # Repository object
 
     def set_credentials(self, username: str, password: str):
         self.login = {'username': username, 'password': password}
@@ -55,6 +57,32 @@ class DockerAnalyser:
         self.http.headers['Authorization'] = "Bearer %s" % self.token
 
         return self.token
+
+    def query(self, query, site='repositories') -> (int, list):
+        """
+        Queries Docker Hub repository for given search term
+        :param query: search string
+        :param site: site to browse (default 'repositories')
+        :return: count, list of repository names or None
+        """
+        search_url = DOCKER_BASE_URL + "search/" + site
+        query = "{url}/?query={query}".format(url=search_url, query=query)
+
+        self.response = self.http.request('GET', query)
+        self._check_response()
+
+        json_response = json.loads(self.response.data)
+        count = json_response['count']
+        results = json_response['results']
+
+        # TODO handle multiple pages
+
+        repo_list = [None] * len(results)
+        "List of tuples: (repo_name, short_description)"
+        for i, res in enumerate(results):
+            repo_list[i] = (res['repo_name'], res['short_description'])
+
+        return count, repo_list
 
     @staticmethod
     def repo_to_url(repository, namespace="", site='repositories'):
