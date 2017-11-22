@@ -3,7 +3,7 @@
 import sys
 
 # Import custom classes
-from remote import DockerAnalyser
+from docker_remote.core.analyser import DockerAnalyser
 
 
 class ExceptionHandler:

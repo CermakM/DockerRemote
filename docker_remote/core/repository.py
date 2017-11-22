@@ -8,7 +8,7 @@ class Tag(dict):
         """
         Convenient class to access tag dictionary via attributes
         :param dct: dictionary holding tag attributes, dict
-        :param namespace: remote namespace, str
+        :param namespace: repository namespace, str
         :param repo: remote repository name, str
         """
         super(Tag, self).__init__(dct)

@@ -3,7 +3,7 @@
 import argparse
 import sys
 
-from manager import DockerManager
+from docker_remote.manager import DockerManager
 
 
 def _init_logger():

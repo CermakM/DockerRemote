@@ -1,0 +1,7 @@
+CHANGES
+=======
+
+* Implemented official repositories querying
+* Implemented search command
+* Docker Hub Remote Manager
+* Initial commit

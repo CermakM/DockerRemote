@@ -5,7 +5,7 @@ import json
 
 import urllib3
 
-from .repository import DockerRepository, Tag
+from docker_remote.core.repository import DockerRepository, Tag
 
 DOCKER_BASE_URL = 'https://hub.docker.com/v2/'
 DOCKER_LOGIN_URL = 'https://hub.docker.com/v2/users/login/'

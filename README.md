@@ -1,14 +1,18 @@
 # docker-remote
 
-### Docker Remote Manager - Manage Docker Hub repositories
+### Docker Hub remote repository manager
 
 <br>
 
 #### Installation:
 
-<br>
+python3 setup.py install --user
 
-###### TODO
+This should install the docker-remote executable in `~/.local/bin`. <br>
+Make sure that the path to the executable is in the `PATH`, to do this,
+add the following line to your `~/.bashrc` file
+
+`export PATH="~/.local/bin/:$PATH"`
 
 <br>
 
