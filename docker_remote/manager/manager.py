@@ -133,7 +133,7 @@ class DockerManager:
         """Prints number of tags from remote repository"""
         print(self.analyser.get_nof_tags())
 
-    def print_tags(self, count: int = None):
+    def print_tags(self, count: int = None, fmt='plain', delim=' '):
         """Prints list of tags from remote repository
 
         """
@@ -141,17 +141,21 @@ class DockerManager:
         if count is None:
             count = len(tags)
 
-        key_maxlen = max(len(tag.__str__()) for tag in tags)
-        header_str = "{:<{maxlen}} | {:^10}| {:^.10}".format(
-            "TAG", "SIZE", "UPDATED AT", maxlen=key_maxlen)
+        if fmt == 'plain':
+            print(delim.join([tag['name'] for tag in tags]))
 
-        print(header_str)
-        print("{:-<{len}}".format("", len=len(header_str)))
-        for tag in tags[:count]:
-            print("{:<{maxlen}} | {:^10}| {:.10}"
-                  .format(tag.__str__(), tag['size_mb'], tag['last_updated'], maxlen=key_maxlen))
+        else:
+            key_maxlen = max(len(tag.__str__()) for tag in tags)
+            header_str = "{:<{maxlen}} | {:^10}| {:^.10}".format(
+                "TAG", "SIZE", "UPDATED AT", maxlen=key_maxlen)
 
-        print('\n')
+            print(header_str)
+            print("{:-<{len}}".format("", len=len(header_str)))
+            for tag in tags[:count]:
+                print("{:<{maxlen}} | {:^10}| {:.10}"
+                      .format(tag.__str__(), tag['size_mb'], tag['last_updated'], maxlen=key_maxlen))
+
+            print('\n')
 
     def remove_tag(self, tag_name: str):
         """

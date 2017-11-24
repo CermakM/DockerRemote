@@ -43,9 +43,10 @@ Usage
 
 ##### Managing tags
 
-`docker-remote tags <repository>`
-
 `docker-remote tags <namespace>/<repository>`
+
+By default the output is in plain format, to pretty the output, use
+`--pretty` option
 
 If you wish to manipulate your repository, login is necessary.
 In that case provide `-u` (short for `--login`) argument
@@ -77,6 +78,7 @@ This is not possible at the moment, but will be in the bright future.
 
 ###### TODO 
 
+- add versioning
 - support for listing multiple pages (pager maybe)
 - add support for description modifications
 - pass tags to operate on with `namespace/repo:tag`

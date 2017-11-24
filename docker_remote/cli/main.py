@@ -27,8 +27,8 @@ def main():
     )
 
     parser.add_argument(
-        '-s', '--silent', action='store_true',
-        help="Silent all unnecessary output"
+        '-v', '--verbose', action='store_true',
+        help="Verbose output"
     )
 
     # Initialize subparsers
@@ -62,17 +62,17 @@ def main():
     group_descr_len = parser_description.add_mutually_exclusive_group()
     group_descr_len.add_argument(
         '--short', action='store_true', default=True,
-        help="List only short description (default)"
+        help="Select only short description (default)"
     )
 
     group_descr_len.add_argument(
         '--long', action='store_true',
-        help="List only long description"
+        help="Select only long description"
     )
 
     group_descr_len.add_argument(
         '--full', action='store_true',
-        help="list both short and long description"
+        help="Select both short and long description"
     )
 
     # Sub parser for tags sub command
@@ -81,6 +81,16 @@ def main():
     parser_tags.add_argument(
         '-l', '--list', action='store_true', default=True,
         help="List tags in Docker hub repository"
+    )
+
+    parser_tags.add_argument(
+        '--pretty', action='store_true',
+        help="Pretty the output format"
+    )
+
+    parser_tags.add_argument(
+        '-d', '--delim', action='store', default=' ',
+        help="Delimiter to separate text plain output"
     )
 
     parser_tags.add_argument(
@@ -95,20 +105,20 @@ def main():
         help="Output only number of results"
     )
 
-    group_lst_tag_count = parser_tags.add_mutually_exclusive_group()
-    group_lst_tag_count.add_argument(
+    group_tag_num = parser_tags.add_mutually_exclusive_group()
+    group_tag_num.add_argument(
         '-n', '--number', action='store', type=int,
-        help="List information about specific number of tags (from the newest)"
+        help="Select specific number of tags (from the newest)"
     )
 
-    group_lst_tag_count.add_argument(
+    group_tag_num.add_argument(
         '-t', '--tag', action='store', type=str,
-        help="List information about the tag specified by id (name)"
+        help="Select a tag specified by id (name)"
     )
 
-    group_lst_tag_count.add_argument(
-        '-a', '-all', action='store_true',
-        help="List all tags in Docker Hub repository (default)"
+    group_tag_num.add_argument(
+        '-a', '--all', action='store_true',
+        help="Select all tags in Docker Hub repository (default)"
     )
 
     # Last argument should be repository - positional argument
@@ -131,7 +141,7 @@ def main():
         namespace, repository = repository_split
     else:
         repository, = repository_split
-        if not args.silent:
+        if args.verbose:
             print("[WARNING]: namespace not provided, "
                   "searching for official repositories",
                   file=sys.stderr)
@@ -141,20 +151,21 @@ def main():
     else:
         username, password = None, None
 
-    verbose = not args.silent
     # Necessary to avoid creating repository
     is_search = args.command == 'search'
 
     hub = DockerManager(repository=repository, namespace=namespace,
                         search=is_search,
                         username=username, password=password,
-                        verbose=verbose, debug=True)  # FIXME - turn off debug
+                        verbose=args.verbose, debug=True)  # FIXME - turn off debug
 
-    if not args.silent and not is_search:
+    if args.verbose and not is_search:
         hub.print_namespace()
 
     if is_search:
         print("Searching Docker Hub repository for: %s\n" % args.repository)
+
+    args.format = 'plain' if not args.pretty else 'pretty'
 
 # Handle search
 
@@ -181,10 +192,16 @@ def main():
             if args.tag:
                 hub.print_tag_info(args.tag)
             else:
-                hub.print_tags(args.number)
+                hub.print_tags(args.number, fmt=args.format, delim=args.delim)
         elif args.remove:
-            # TODO
-            print("TODO")
+            if not any([args.tag, args.number, args.all]):
+                parser.error("--remove flag requires exactly one argument")
+            if args.tag:
+                hub.remove_tag(args.tag)
+            elif args.number:
+                hub.remove_tags(args.number)
+            else:
+                hub.remove_all_tags()
 
 
 if __name__ == '__main__':
