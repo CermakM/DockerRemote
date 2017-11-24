@@ -130,6 +130,10 @@ class DockerAnalyser:
 
         return list(self.repository.tags.keys())
 
+    def get_nof_tags(self) -> int:
+
+        return len(self.repository.tags)
+
     def get_description(self) -> tuple:
 
         return self.repository['description'], self.repository['full_description']

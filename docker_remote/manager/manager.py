@@ -129,8 +129,13 @@ class DockerManager:
 
         print('\n')
 
+    def print_tag_count(self):
+        """Prints number of tags from remote repository"""
+        print(self.analyser.get_nof_tags())
+
     def print_tags(self, count: int = None):
         """Prints list of tags from remote repository
+
         """
         tags = self.analyser.get_tags()
         if count is None:

@@ -38,9 +38,13 @@ def main():
     # Search parser for search sub command
     parser_search = subparsers.add_parser('search',
                                           help="Search Docker Hub repository")
+    parser_search.add_argument(
+        '-c', '--count', action='store_true',
+        help="Output only number of results"
+    )
 
     parser_search.add_argument(
-        '-n', '--count', action='store',
+        '-n', '--number', action='store',
         help="Limit number of pages of search results."
              "By default only first page is printed."  # TODO
     )
@@ -86,9 +90,14 @@ def main():
              "for this action to succeed"
     )
 
+    parser_tags.add_argument(
+        '-c', '--count', action='store_true',
+        help="Output only number of results"
+    )
+
     group_lst_tag_count = parser_tags.add_mutually_exclusive_group()
     group_lst_tag_count.add_argument(
-        '-n', '--count', action='store', type=int,
+        '-n', '--number', action='store', type=int,
         help="List information about specific number of tags (from the newest)"
     )
 
@@ -122,9 +131,10 @@ def main():
         namespace, repository = repository_split
     else:
         repository, = repository_split
-        print("[WARNING]: namespace not provided, "
-              "searching for official repositories",
-              file=sys.stderr)
+        if not args.silent:
+            print("[WARNING]: namespace not provided, "
+                  "searching for official repositories",
+                  file=sys.stderr)
 
     if args.login is not None:
         username, password = args.login.split(':')
@@ -146,8 +156,15 @@ def main():
     if is_search:
         print("Searching Docker Hub repository for: %s\n" % args.repository)
 
-    # Choose from list actions
-    if args.command == 'description':
+# Handle search
+
+    if args.command == 'search':
+
+        hub.search(args.repository, args.number)
+
+# Handle description
+
+    elif args.command == 'description':
         if args.list:
             args.short = not args.long
             if args.full:
@@ -155,19 +172,19 @@ def main():
 
             hub.print_description(short=args.short, full=args.long)
 
+# Handle tags
+
     elif args.command == 'tags':
-        if args.list:
+        if args.count:
+            hub.print_tag_count()
+        elif args.list:
             if args.tag:
                 hub.print_tag_info(args.tag)
             else:
-                hub.print_tags(args.count)
+                hub.print_tags(args.number)
         elif args.remove:
             # TODO
             print("TODO")
-
-    elif args.command == 'search':
-
-        hub.search(args.repository, args.count)
 
 
 if __name__ == '__main__':

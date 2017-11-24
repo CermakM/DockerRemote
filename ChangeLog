@@ -1,6 +1,8 @@
 CHANGES
 =======
 
+* Implemented --count option
+* Installation changes
 * Implemented setuptools using pbr
 * Implemented official repositories querying
 * Implemented search command
