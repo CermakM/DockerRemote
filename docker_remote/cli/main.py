@@ -172,7 +172,6 @@ def main():
     if is_search:
         print("Searching Docker Hub repository for: %s\n" % args.repository)
 
-    args.format = 'plain' if not args.pretty else 'pretty'
 
 # Handle search
 
@@ -193,13 +192,15 @@ def main():
 # Handle tags
 
     elif args.command == 'tags':
-        if args.count:
-            hub.print_tag_count()
-        elif args.list:
+        args.format = 'plain' if not args.pretty else 'pretty'
+
+        if args.list:
             if args.tag:
                 hub.print_tag_info(args.tag)
             else:
                 hub.print_tags(args.number, fmt=args.format, delim=args.delim)
+        elif args.count:
+            hub.print_tag_count()
         elif args.remove:
             if not any([args.tag, args.number, args.all]):
                 parser.error("--remove flag requires exactly one argument")
