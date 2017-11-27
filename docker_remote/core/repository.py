@@ -28,10 +28,14 @@ class DockerRepository(dict):
     """Docker repository object"""
 
     def __init__(self, *args, **kwargs):
+        self.count = 0
         self.tags = {}
         "Dictionary of Tag objects, key = tag.name"
 
         super(DockerRepository, self).__init__(*args, **kwargs)
+
+    def __len__(self):
+        return self.count
 
     def add_info(self, data: dict):
         """Accepts data in json format and parse it to receive repository info

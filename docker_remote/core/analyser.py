@@ -110,11 +110,20 @@ class DockerAnalyser:
         repository = DockerRepository(url=self.url)
         repository.add_info(data=json.loads(self.response.data, encoding='UTF-8'))
 
-        # Get repository tags
-        self.response = self.http.request('GET', self.url + 'tags/')
-        self._check_response()
+        # Get repository tags and repeat for multiple pages
+        data = None
+        next_url = self.url + 'tags/'
 
-        repository.add_tags(data=json.loads(self.response.data, encoding='UTF-8'))
+        while next_url:
+            self.response = self.http.request('GET', next_url)
+            self._check_response()
+
+            data = json.loads(self.response.data, encoding='UTF-8')
+            repository.add_tags(data=data)
+
+            next_url = data['next']
+
+        repository.count = data.get('count', 0)
 
         return repository
 
@@ -132,7 +141,7 @@ class DockerAnalyser:
 
     def get_nof_tags(self) -> int:
 
-        return len(self.repository.tags)
+        return len(self.repository)
 
     def get_description(self) -> tuple:
 

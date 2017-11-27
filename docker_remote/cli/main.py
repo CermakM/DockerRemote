@@ -27,7 +27,7 @@ def main():
     )
 
     parser.add_argument(
-        '--version', action='version',
+        '-V', '--version', action='version',
         version="%(prog)s {version}".format(version=docker_remote.__version__),
         help='Show current version and exit'
     )

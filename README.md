@@ -24,6 +24,12 @@ add the following line to your `~/.bashrc` file.
 
 `export PATH="~/.local/bin/:$PATH"`
 
+and source it with `source ~/.bashrc`
+
+Check if installation was successful by issuing
+
+`docker-remote -V` or `docker-remote --version`
+
 <br>
 
 Usage
