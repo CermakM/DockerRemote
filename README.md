@@ -78,7 +78,6 @@ This is not possible at the moment, but will be in the bright future.
 
 ###### TODO 
 
-- add versioning
 - support for listing multiple pages (pager maybe)
 - add support for description modifications
 - pass tags to operate on with `namespace/repo:tag`

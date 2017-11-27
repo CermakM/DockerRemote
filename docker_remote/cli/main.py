@@ -3,6 +3,7 @@
 import argparse
 import sys
 
+import docker_remote
 from docker_remote.manager import DockerManager
 
 
@@ -20,15 +21,21 @@ def main():
         formatter_class=argparse.RawTextHelpFormatter
     )
 
+    parser.add_argument(
+        '-v', '--verbose', action='store_true',
+        help="Verbose output"
+    )
+
+    parser.add_argument(
+        '--version', action='version',
+        version="%(prog)s {version}".format(version=docker_remote.__version__),
+        help='Show current version and exit'
+    )
+
     # Add arguments
     parser.add_argument(
         '-u', '--login', action='store',
         help="Login credentials to Docker Hub in format 'username:password'"
-    )
-
-    parser.add_argument(
-        '-v', '--verbose', action='store_true',
-        help="Verbose output"
     )
 
     # Initialize subparsers
