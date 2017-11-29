@@ -29,6 +29,9 @@ class DockerRepository(dict):
 
     def __init__(self, *args, **kwargs):
         self.count = 0
+        self.size = 0
+        self.size_mb = ""
+        "size in MB, str"
         self.tags = {}
         "Dictionary of Tag objects, key = tag.name"
 
@@ -62,3 +65,6 @@ class DockerRepository(dict):
         for tag_dct in dct_list:
             tag = Tag(tag_dct, self['namespace'], self['name'])
             self.tags[tag['name']] = tag
+            self.size += tag['full_size']
+
+        self.size_mb = str(self.size // 1e6) + ' MB'

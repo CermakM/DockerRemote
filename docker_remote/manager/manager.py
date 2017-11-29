@@ -80,6 +80,9 @@ class DockerManager:
         # TODO
         pass
 
+    def print_repo_size(self, full):
+        print(self.analyser.get_repo_size(full=full))
+
     def print_namespace(self):
         if self.namespace == 'library':
             print("Docker Hub remote repository: "

@@ -32,7 +32,6 @@ def main():
         help='Show current version and exit'
     )
 
-    # Add arguments
     parser.add_argument(
         '-u', '--login', action='store',
         help="Login credentials to Docker Hub in format 'username:password'"
@@ -41,6 +40,19 @@ def main():
     # Initialize subparsers
     subparsers = parser.add_subparsers(dest='command',
                                        description="Docker Manager sub commands")
+
+    parser_repo = subparsers.add_parser('repository',
+                                        help="Manage Docker Hub repository information")
+
+    parser_repo.add_argument(
+        '-s', '--size', action='store_true',
+        help="Show total repository size in MBs and exit"
+    )
+
+    parser_repo.add_argument(
+        '-S', '--full-size', action='store_true',
+        help="Show full repository size and exit"
+    )
 
     # Search parser for search sub command
     parser_search = subparsers.add_parser('search',
@@ -143,7 +155,7 @@ def main():
 
     # Set up parsed arguments
     namespace, repository = "library", ""
-    repository_split = args.repository.split('/')
+    repository_split = args.repository.lower().split('/')
     if len(repository_split) == 2:
         namespace, repository = repository_split
     else:
@@ -176,8 +188,14 @@ def main():
 # Handle search
 
     if args.command == 'search':
-
         hub.search(args.repository, args.number)
+
+# Handle repository
+
+    elif args.command == 'repository':
+        if args.size or args.full_size:
+            hub.print_repo_size(full=args.full_size)
+
 
 # Handle description
 

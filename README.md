@@ -41,6 +41,11 @@ Usage
 `docker-remote search <namespace>/<repository>`
 
 
+##### Managing repository information
+
+`docker-remote repository --size <namespace>/<repository>`
+
+
 ##### Managing descriptions
 
 `docker-remote description <namespace>/<repository>`

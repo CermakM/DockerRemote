@@ -127,6 +127,10 @@ class DockerAnalyser:
 
         return repository
 
+    def get_repo_size(self, full=False) -> int or str:
+
+        return self.repository.size if full else self.repository.size_mb
+
     def get_tag(self, tag_name: str) -> Tag:
 
         return self.repository.tags[tag_name]
