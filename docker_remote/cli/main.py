@@ -2,6 +2,7 @@
 
 import argparse
 import sys
+import textwrap
 
 import docker_remote
 from docker_remote.manager import DockerManager
@@ -73,6 +74,7 @@ def main():
                                                help="Manage Docker Hub "
                                                     "repository description")
 
+    # Add --list option only for explicit usages - being able to show intention
     parser_description.add_argument(
         '-l', '--list', action='store_true', default=True,
         help="List description in Docker hub repository"
@@ -95,16 +97,19 @@ def main():
     )
 
     # Sub parser for tags sub command
-    parser_tags = subparsers.add_parser('tags', help="Manage Docker Hub repository tags")
+    parser_tags = subparsers.add_parser('tags',
+                                        formatter_class=argparse.RawTextHelpFormatter,
+                                        help="Manage Docker Hub repository tags")
 
+    # Add --list option only for explicit usages - being able to show intention
     parser_tags.add_argument(
         '-l', '--list', action='store_true', default=True,
         help="List tags in Docker hub repository"
     )
 
     parser_tags.add_argument(
-        '--pretty', action='store_true',
-        help="Pretty the output format"
+        '-c', '--count', action='store_true',
+        help="Show only number of results and exits"
     )
 
     parser_tags.add_argument(
@@ -113,21 +118,58 @@ def main():
     )
 
     parser_tags.add_argument(
-        '--remove', action='store_true',
-        help="Remove tags from Docker Hub repository\n"
-             "Note: Login credentials are necessary "
-             "for this action to succeed"
+        '--pretty', action='store_true',
+        help="Pretty the output format"
     )
 
     parser_tags.add_argument(
-        '-c', '--count', action='store_true',
-        help="Output only number of results"
+        '--pop-back', action='store_true',
+        help=textwrap.dedent('''\
+        Remove tags from Docker Hub repository (oldest first)
+        Note: Login is necessary
+        ''')
+    )
+
+    parser_tags.add_argument(
+        '--pop-front', action='store_true',
+        help=textwrap.dedent('''\
+        Remove tags from Docker Hub repository (newest first)
+        Note: Login is necessary
+        ''')
+    )
+
+    parser_tags.add_argument(
+        '--pop-all', action='store_true',
+        help=textwrap.dedent('''\
+        Remove all tags from Docker Hub repository
+        Note: Login is necessary
+        ''')
+    )
+
+    parser_tags.add_argument(
+        '-y', '--assumeyes', action='store_true', dest='confirm',
+        default=None,
+        help="Automatically answer 'yes' to all questions"
+    )
+
+    parser_tags.add_argument(
+        '--assumeno', action='store_false', dest='confirm',
+        default=None,
+        help="Automatically answer 'no' to all questions"
     )
 
     group_tag_num = parser_tags.add_mutually_exclusive_group()
     group_tag_num.add_argument(
         '-n', '--number', action='store', type=int,
-        help="Select specific number of tags (from the newest)"
+        help=textwrap.dedent('''\
+        Select specific number of tags.
+        If combined with the `--list` argument, lists `n` newest tags.
+        ''')
+    )
+
+    group_tag_num.add_argument(
+        '-k', '--keep', action='store', type=int,
+        help="Opposite of -n, specify number of tags to be kept"
     )
 
     group_tag_num.add_argument(
@@ -136,7 +178,7 @@ def main():
     )
 
     group_tag_num.add_argument(
-        '-a', '--all', action='store_true',
+        '-a', '--all', action='store_const', const=-1,
         help="Select all tags in Docker Hub repository (default)"
     )
 
@@ -184,7 +226,6 @@ def main():
     if is_search:
         print("Searching Docker Hub repository for: %s\n" % args.repository)
 
-
 # Handle search
 
     if args.command == 'search':
@@ -200,34 +241,47 @@ def main():
 # Handle description
 
     elif args.command == 'description':
-        if args.list:
-            args.short = not args.long
-            if args.full:
-                args.long = args.short
+        args.short = not args.long
+        if args.full:
+            args.long = args.short
 
-            hub.print_description(short=args.short, full=args.long)
+        hub.print_description(short=args.short, full=args.long)
 
 # Handle tags
 
     elif args.command == 'tags':
+
         args.format = 'plain' if not args.pretty else 'pretty'
 
-        if args.list:
+        if args.pop_back or args.pop_front:
+            reverse = True if args.pop_front else False
+
+            if not any([args.tag, args.number, args.keep, args.all]):
+                parser.error("argument missing, choose from "
+                             "[--tag, --number, --keep, --all])")
+            if args.tag:
+                hub.remove_tag(args.tag)
+            else:
+                if args.keep:
+                    n = hub.get_tag_count() - args.keep
+                else:
+                    n = args.number if args.number else args.all
+
+                hub.remove_tags(n, confirmation=args.confirm,
+                                reverse=reverse)
+        if args.pop_all:
+
+            hub.remove_tags(-1, confirmation=args.confirm)
+
+        elif args.count:
+            hub.print_tag_count()
+
+        else:
+            # args.list true by default
             if args.tag:
                 hub.print_tag_info(args.tag)
             else:
                 hub.print_tags(args.number, fmt=args.format, delim=args.delim)
-        elif args.count:
-            hub.print_tag_count()
-        elif args.remove:
-            if not any([args.tag, args.number, args.all]):
-                parser.error("--remove flag requires exactly one argument")
-            if args.tag:
-                hub.remove_tag(args.tag)
-            elif args.number:
-                hub.remove_tags(args.number)
-            else:
-                hub.remove_all_tags()
 
 
 if __name__ == '__main__':

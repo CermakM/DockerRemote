@@ -64,10 +64,16 @@ In that case provide `-u` (short for `--login`) argument
 
 `docker-remote --login username:password tags --remove -t <tagname>`
 
-You can also remove all the tags in your repository:
+You can also remove all the tags in your repository:\
+**[WARNING]** These operations *can NOT* be undone<br>
 
-`docker-remote --login username:password tags --remove --all`\
-**[WARNING]** This operation *can NOT* be undone<br>
+`docker-remote --login username:password tags --pop-all`\
+
+`docker-remote --login username:password tags --pop-back -n 2 <namespace>/<repository>`
+
+You can even select how many tags you want to keep and discard the rest
+
+`docker-remote --login username:password tags --pop-back -keep 3 <namespace>/<repository>`
 
 <br>
 
@@ -87,9 +93,12 @@ This is not possible at the moment, but will be in the bright future.
 
 ***
 
-###### TODO 
+###### TODOs and Suggestions 
 
 - support for listing multiple pages (pager maybe)
 - add support for description modifications
 - pass tags to operate on with `namespace/repo:tag`
 - create interactive session so that user could login only once
+- consider implementing parent parser
+- consider allowing abbreviations
+- think of another implementation instead of millions of ifs...

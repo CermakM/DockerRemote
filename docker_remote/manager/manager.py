@@ -132,6 +132,10 @@ class DockerManager:
 
         print('\n')
 
+    def get_tag_count(self) -> int:
+        """Returns number of tags from remote repository"""
+        return self.analyser.get_nof_tags()
+
     def print_tag_count(self):
         """Prints number of tags from remote repository"""
         print(self.analyser.get_nof_tags())
@@ -149,41 +153,86 @@ class DockerManager:
 
         else:
             key_maxlen = max(len(tag.__str__()) for tag in tags)
-            header_str = "{:<{maxlen}} | {:^10}| {:^.10}".format(
-                "TAG", "SIZE", "UPDATED AT", maxlen=key_maxlen)
+            format_str = "{:<5}{:^{maxlen}} | {:^11}| {:^.10}"
+            header_str = format_str.format(
+                "NUM", "TAG", "SIZE", "UPDATED AT", maxlen=key_maxlen)
 
             print(header_str)
             print("{:-<{len}}".format("", len=len(header_str)))
-            for tag in tags[:count]:
-                print("{:<{maxlen}} | {:^10}| {:.10}"
-                      .format(tag.__str__(), tag['size_mb'], tag['last_updated'], maxlen=key_maxlen))
+            for index, tag in enumerate(tags[:count]):
+                print(format_str.format(str(index + 1) + '.',
+                                        tag.__str__(),
+                                        tag['size_mb'],
+                                        tag['last_updated'],
+                                        maxlen=key_maxlen))
 
             print('\n')
 
-    def remove_tag(self, tag_name: str):
+    def remove_tag(self, tag_name: str, confirmation=None):
         """
         Remove tag from remote repository by specifying tag name
         Note: This method requires authorization token (login needed)
         :param tag_name: tag id (name), str
+        :param confirmation: True for confirmed, False for not (default None)
         :return:
         """
+
+        if not confirmation:
+            if not self._confirm_tags([tag_name]):
+                print("Operation aborted", file=sys.stderr)
+                exit(1)
+
         self.analyser.remove_tag(tag_name)
-        print("Tag: {name} was successfully removed".format(name=tag_name))
 
-    def remove_tags(self, n: int):
-        """Remove `n` latest tags from remote repository
+        if self.verbose:
+            print("Tag: {name} was successfully removed".format(name=tag_name))
+
+    def remove_tags(self, n: int, confirmation=None, reverse=False):
+        """Remove `n` oldest tags from remote repository
         Note: This method requires authorization token (login needed)
-        :param n: number of tags to be removed, int
+        :param n: number of tags to be removed (-1 for all), int
+        :param confirmation: True for confirmed, False for not (default None)
+        :param reverse: Remove tags in reversed order (default False - oldest first)
+        :returns: error code, int
         """
-        tags = self.analyser.get_tag_names()
-        tags = sorted(tags, key=lambda t: t.last_updated)
+        tags = self.analyser.get_tags()
+        if n < 0:
+            n = len(tags)
+
+        tags = sorted(tags, key=lambda t: t['last_updated'], reverse=reverse)
         max_index = min(n, len(tags))
-        for tag in tags[:max_index]:
-            self.remove_tag(tag.name)
 
-    def remove_all_tags(self):
-        """Remove all tags from remote repository
-        Note: This method requires authorization token (login needed)
-        """
-        for tag in self.analyser.get_tag_names():
-            self.analyser.remove_tag(tag.name)
+        tag_names = [t['name'] for t in tags[:max_index]]
+        if not confirmation:
+            if not self._confirm_tags(tag_names):
+                print("Operation aborted", file=sys.stderr)
+                exit(1)
+
+        for tag in tag_names:
+            self.remove_tag(tag)
+
+    def _confirm_tags(self, tag_names: list) -> bool:
+        msg = "The following tags will be deleted:\n"
+        if self.namespace == 'library':
+            namespace = ''
+        else:
+            namespace = self.namespace + '/'
+        for tag in tag_names:
+            msg += "\t{namespace}{repo}:{tag}\n".format(namespace=namespace,
+                                                        repo=self.repository_name,
+                                                        tag=tag)
+        msg += "Is this okay?"
+        return self._confirm(msg)
+
+    def _confirm(self, message: str) -> bool:
+        """Ask user for confirmation, choice [y/N]"""
+        confirmation = map(str.lower, input("%s [y/N]: " % message))
+        try:
+            confirmation = next(confirmation)
+        except StopIteration:
+            return False
+
+        if confirmation in ['n', 'y']:
+            return [False, True][confirmation == 'y']
+        else:
+            return self._confirm(message)
