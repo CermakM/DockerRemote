@@ -263,7 +263,11 @@ def main():
                 hub.remove_tag(args.tag)
             else:
                 if args.keep:
-                    n = hub.get_tag_count() - args.keep
+                    repo_tag_count = hub.get_tag_count()
+                    if args.keep > repo_tag_count:
+                        print("There are no tags to be removed")
+                        exit(0)
+                    n = repo_tag_count - args.keep
                 else:
                     n = args.number if args.number else args.all
 

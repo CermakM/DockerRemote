@@ -196,6 +196,10 @@ class DockerManager:
         :returns: error code, int
         """
         tags = self.analyser.get_tags()
+        if n == 0:
+            print("There are no tags to be removed")
+            exit(0)
+
         if n < 0:
             n = len(tags)
 

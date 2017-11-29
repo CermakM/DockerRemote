@@ -67,7 +67,7 @@ In that case provide `-u` (short for `--login`) argument
 You can also remove all the tags in your repository:\
 **[WARNING]** These operations *can NOT* be undone<br>
 
-`docker-remote --login username:password tags --pop-all`\
+`docker-remote --login username:password tags --pop-all`
 
 `docker-remote --login username:password tags --pop-back -n 2 <namespace>/<repository>`
 
