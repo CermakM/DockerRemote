@@ -58,15 +58,17 @@ class DockerAnalyser:
 
         return self.token
 
-    def query(self, query, site='repositories') -> (int, list):
+    def query(self, query, site='repositories', page=1) -> (int, list):
         """
         Queries Docker Hub repository for given search term
         :param query: search string
         :param site: site to browse (default 'repositories')
+        :param page: page to be displayed (default 1)
         :return: count, list of repository names or None
         """
         search_url = DOCKER_BASE_URL + "search/" + site
-        query = "{url}/?query={query}".format(url=search_url, query=query)
+        query = "{url}/?page={page}&query={query}".format(url=search_url,
+                                                          page=page, query=query)
 
         self.response = self.http.request('GET', query)
         self._check_response()
@@ -82,7 +84,7 @@ class DockerAnalyser:
         for i, res in enumerate(results):
             repo_list[i] = (res['repo_name'], res['short_description'])
 
-        return count, repo_list
+        return repo_list, count
 
     @staticmethod
     def repo_to_url(repository, namespace, site='repositories'):

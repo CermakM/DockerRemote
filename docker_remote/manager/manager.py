@@ -59,26 +59,42 @@ class DockerManager:
         self.analyser.set_credentials(username, password)
         self.token = self.analyser.request_token()
 
-    def search(self, query, count=None):
-        num_results, repo_list = self.analyser.query(query)
+    def search(self, query, page_lim=None) -> iter:
+        repo_list, num_results = self.analyser.query(query)
         # TODO handle printing multiple pages
+
         print("Number of results: {}\n".format(num_results))
 
-        count = min(len(repo_list), count) if count else len(repo_list)
+        est_num_pages = num_results // len(repo_list)
+
+        num_pages = min(est_num_pages, page_lim) if page_lim else est_num_pages
 
         max_key_len = max(len(res[0]) for res in repo_list)
+        for page_i in range(num_pages):
+            yield "Page %d\n------" % (page_i + 1)
+            for i in range(len(repo_list)):
+                repo = repo_list[i]
+                result = "{repo:<{keylen}} : {description}\n".format(
+                    keylen=max_key_len,
+                    repo=repo[0],
+                    description=repo[1]
+                )
 
-        for i in range(count):
-            repo = repo_list[i]
-            print("{repo:<{keylen}} : {description}\n".format(
-                keylen=max_key_len,
-                repo=repo[0],
-                description=repo[1]
-            ))
+                yield result
+
+            repo_list, _ = self.analyser.query(query, page=2)
 
     def search_by_user(self, user, query):
         # TODO
         pass
+
+    def print_nof_search_results(self, query):
+        _, num_results = self.analyser.query(query)
+
+        if self.verbose:
+            print("Number of results: {}\n".format(num_results))
+        else:
+            print(num_results)
 
     def print_repo_size(self, full):
         print(self.analyser.get_repo_size(full=full))

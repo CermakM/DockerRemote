@@ -1,16 +1,28 @@
 """Command line interface for Docker Remote Manager"""
 
 import argparse
+import io
+import subprocess
 import sys
+
 import textwrap
 
 import docker_remote
 from docker_remote.manager import DockerManager
 
+DEFAULT_PAGER = 'less'
+
 
 def _init_logger():
     # TODO
     pass
+
+
+def _init_pager() -> str:
+    """Check for available pager to be used"""
+    # TODO: check for tty and allowed pagers, return pager
+
+    return DEFAULT_PAGER
 
 
 def main():
@@ -64,7 +76,7 @@ def main():
     )
 
     parser_search.add_argument(
-        '-n', '--number', action='store',
+        '-n', '--number', action='store', type=int,
         help="Limit number of pages of search results."
              "By default only first page is printed."  # TODO
     )
@@ -190,6 +202,11 @@ def main():
 
     # TODO lots of other stuff
 
+    # Initialize
+    # ----------
+
+    pager = _init_pager()
+
     # Parse arguments and initialize DockerManager
     # --------------------------------------------
 
@@ -229,7 +246,29 @@ def main():
 # Handle search
 
     if args.command == 'search':
-        hub.search(args.repository, args.number)
+        if args.count:
+            hub.print_nof_search_results(query=args.repository)
+        else:
+            search = hub.search(query=args.repository, page_lim=args.number)
+            proc = subprocess.Popen(pager, shell=True, stdin=subprocess.PIPE)
+            try:
+                with io.TextIOWrapper(proc.stdin) as pipe:
+                    for res in search:
+                        try:
+                            pipe.write(res + '\n')
+                        except KeyboardInterrupt:
+                            # Abandon rest of the results
+                            # Note: pager is still in control of the terminal
+                            pass
+            except BrokenPipeError:
+                pass  # Ignore broken pipe error
+            while True:
+                try:
+                    proc.wait()
+                    break
+                except KeyboardInterrupt:
+                    # Ignore ctrl-c to exit pager properly
+                    pass
 
 # Handle repository
 
