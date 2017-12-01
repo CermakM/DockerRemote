@@ -260,7 +260,7 @@ def main():
                 parser.error("argument missing, choose from "
                              "[--tag, --number, --keep, --all])")
             if args.tag:
-                hub.remove_tag(args.tag)
+                hub.remove_tag(args.tag, confirmation=args.confirm)
             else:
                 if args.keep:
                     repo_tag_count = hub.get_tag_count()

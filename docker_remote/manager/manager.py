@@ -177,10 +177,8 @@ class DockerManager:
         :return:
         """
 
-        if not confirmation:
-            if not self._confirm_tags([tag_name]):
-                print("Operation aborted", file=sys.stderr)
-                exit(1)
+        if not self._confirm_tags([tag_name], confirmation):
+            self._abort(1)
 
         self.analyser.remove_tag(tag_name)
 
@@ -207,15 +205,14 @@ class DockerManager:
         max_index = min(n, len(tags))
 
         tag_names = [t['name'] for t in tags[:max_index]]
-        if not confirmation:
-            if not self._confirm_tags(tag_names):
-                print("Operation aborted", file=sys.stderr)
-                exit(1)
+
+        if not self._confirm_tags(tag_names, confirmation):
+            self._abort(1)
 
         for tag in tag_names:
             self.remove_tag(tag)
 
-    def _confirm_tags(self, tag_names: list) -> bool:
+    def _confirm_tags(self, tag_names: list, confirmation) -> bool:
         msg = "The following tags will be deleted:\n"
         if self.namespace == 'library':
             namespace = ''
@@ -225,12 +222,18 @@ class DockerManager:
             msg += "\t{namespace}{repo}:{tag}\n".format(namespace=namespace,
                                                         repo=self.repository_name,
                                                         tag=tag)
-        msg += "Is this okay?"
-        return self._confirm(msg)
+        msg += "Is this okay? [y/N]: "
+        if confirmation is None:
+            confirmation = self._confirm()
 
-    def _confirm(self, message: str) -> bool:
+        msg += ['N\n', 'y\n'][confirmation]
+
+        print(msg)
+        return confirmation
+
+    def _confirm(self) -> bool:
         """Ask user for confirmation, choice [y/N]"""
-        confirmation = map(str.lower, input("%s [y/N]: " % message))
+        confirmation = map(str.lower, input())
         try:
             confirmation = next(confirmation)
         except StopIteration:
@@ -239,4 +242,16 @@ class DockerManager:
         if confirmation in ['n', 'y']:
             return [False, True][confirmation == 'y']
         else:
-            return self._confirm(message)
+            return self._confirm()
+
+    # TODO consider if the exit is safe - turn to method eventually
+    @staticmethod
+    def _abort(err_code):
+        """
+        Aborts the program and safely exits
+        :param err_code: error code to be returned
+        :return: err_code
+        """
+        print("Operation aborted", file=sys.stderr)
+
+        exit(err_code)
