@@ -48,7 +48,7 @@ class DockerAnalyser:
         self._check_response()
         try:
             self.http.headers['cookie'] = self.response.getheader('set-cookie')
-            self.token = json.loads(self.response.data)['token']
+            self.token = json.loads(self.response.data.decode('utf-8'))['token']
         except KeyError as e:
             # TODO LOG
             raise e
@@ -71,7 +71,7 @@ class DockerAnalyser:
         self.response = self.http.request('GET', query)
         self._check_response()
 
-        json_response = json.loads(self.response.data)
+        json_response = json.loads(self.response.data.decode('utf-8'))
         count = json_response['count']
         results = json_response['results']
 
@@ -108,7 +108,7 @@ class DockerAnalyser:
         self._check_response()
 
         repository = DockerRepository(url=self.url)
-        repository.add_info(data=json.loads(self.response.data, encoding='UTF-8'))
+        repository.add_info(data=json.loads(self.response.data.decode('utf-8'), encoding='UTF-8'))
 
         # Get repository tags and repeat for multiple pages
         data = None
@@ -118,7 +118,7 @@ class DockerAnalyser:
             self.response = self.http.request('GET', next_url)
             self._check_response()
 
-            data = json.loads(self.response.data, encoding='UTF-8')
+            data = json.loads(self.response.data.decode('utf-8'), encoding='UTF-8')
             repository.add_tags(data=data)
 
             next_url = data['next']
