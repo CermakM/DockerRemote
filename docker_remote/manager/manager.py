@@ -59,28 +59,33 @@ class DockerManager:
         self.analyser.set_credentials(username, password)
         self.token = self.analyser.request_token()
 
-    def search(self, query, page_lim=None) -> iter:
+    def search(self, query, page_lim=5) -> iter:
+        """Search Docker Hub for the phrase given by query and yield pages
+        :param query: search phrase, string
+        :param page_lim: limit number of pages to be queried (5 by default)
+        """
         repo_list, num_results = self.analyser.query(query)
         # TODO handle printing multiple pages
 
         print("Number of results: {}\n".format(num_results))
 
-        est_num_pages = num_results // len(repo_list)
+        est_num_pages = num_results // (len(repo_list) + 1)  # +1 to prevent ZeroDivision error
 
         num_pages = min(est_num_pages, page_lim) if page_lim else est_num_pages
 
-        max_key_len = max(len(res[0]) for res in repo_list)
+        max_key_len = max(len(res[0]) for res in repo_list) + 1
         for page_i in range(num_pages):
-            yield "Page %d\n------" % (page_i + 1)
+            page = "Page %d\n------\n" % (page_i + 1)
             for i in range(len(repo_list)):
                 repo = repo_list[i]
                 result = "{repo:<{keylen}} : {description}\n".format(
                     keylen=max_key_len,
                     repo=repo[0],
-                    description=repo[1]
+                    description=repo[1] or '-'
                 )
+                page += "%s \n" % result
 
-                yield result
+            yield page
 
             repo_list, _ = self.analyser.query(query, page=2)
 

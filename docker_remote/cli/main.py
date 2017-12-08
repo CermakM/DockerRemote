@@ -1,16 +1,20 @@
 """Command line interface for Docker Remote Manager"""
 
 import argparse
-import io
-import subprocess
+import os
 import sys
 
 import textwrap
 
 import docker_remote
 from docker_remote.manager import DockerManager
+from docker_remote.cli import pager
 
-DEFAULT_PAGER = 'less'
+# Aliases
+REPOSITORY_ALIASES = ['repository', 'repo', 'r']
+SEARCH_ALIASES = ['search', 's']
+DESCRIPTION_ALIASES = ['description', 'des', 'd']
+TAGS_ALIASES = ['tags', 't']
 
 
 def _init_logger():
@@ -18,11 +22,35 @@ def _init_logger():
     pass
 
 
-def _init_pager() -> str:
-    """Check for available pager to be used"""
-    # TODO: check for tty and allowed pagers, return pager
+def _init_pager() -> pager.Pager:
+    """
+    Check for available pager to be used
+    :return: Pager object
+    """
+    if not hasattr(sys.stdin, 'isatty'):
+        return pager.PlainPager()
+    if not hasattr(sys.stdout, 'isatty'):
+        return pager.PlainPager()
+    if not sys.stdin.isatty() or not sys.stdout.isatty():
+        return pager.PlainPager()
+    if os.environ.get('TERM') in ('dumb', 'emacs'):
+        return pager.PlainPager()
+    if hasattr(os, 'system') and os.system('less 2>/dev/null') == 0:
+        return pager.PipePager('less')
 
-    return DEFAULT_PAGER
+    # `more` cmd throws error 256 if <file> is not provided
+    import tempfile
+    fd, filename = tempfile.mkstemp()
+    os.close(fd)  # It is not necessary to have descriptor opened
+    try:
+        if hasattr(os, 'system') and os.system('more "%s" 2>/dev/null' % filename) == 0:
+            return pager.PipePager('more')
+        else:
+            return pager.TTYPager()
+    finally:
+        os.unlink(filename)  # Close the file
+
+    # TODO: check what happens on win32
 
 
 def main():
@@ -55,6 +83,7 @@ def main():
                                        description="Docker Manager sub commands")
 
     parser_repo = subparsers.add_parser('repository',
+                                        aliases=REPOSITORY_ALIASES,
                                         help="Manage Docker Hub repository information")
 
     parser_repo.add_argument(
@@ -68,7 +97,7 @@ def main():
     )
 
     # Search parser for search sub command
-    parser_search = subparsers.add_parser('search',
+    parser_search = subparsers.add_parser('search', aliases=SEARCH_ALIASES,
                                           help="Search Docker Hub repository")
     parser_search.add_argument(
         '-c', '--count', action='store_true',
@@ -83,6 +112,7 @@ def main():
 
     # Sub parser for description sub command
     parser_description = subparsers.add_parser('description',
+                                               aliases=DESCRIPTION_ALIASES,
                                                help="Manage Docker Hub "
                                                     "repository description")
 
@@ -90,6 +120,11 @@ def main():
     parser_description.add_argument(
         '-l', '--list', action='store_true', default=True,
         help="List description in Docker hub repository"
+    )
+
+    parser_description.add_argument(
+        '--set', action='store', type=str,
+        help="Set Docker Hub repository description (default --short)"
     )
 
     group_descr_len = parser_description.add_mutually_exclusive_group()
@@ -109,7 +144,7 @@ def main():
     )
 
     # Sub parser for tags sub command
-    parser_tags = subparsers.add_parser('tags',
+    parser_tags = subparsers.add_parser('tags', aliases=TAGS_ALIASES,
                                         formatter_class=argparse.RawTextHelpFormatter,
                                         help="Manage Docker Hub repository tags")
 
@@ -205,7 +240,7 @@ def main():
     # Initialize
     # ----------
 
-    pager = _init_pager()
+    _pager = _init_pager()
 
     # Parse arguments and initialize DockerManager
     # --------------------------------------------
@@ -230,7 +265,7 @@ def main():
         username, password = None, None
 
     # Necessary to avoid creating repository
-    is_search = args.command == 'search'
+    is_search = args.command in SEARCH_ALIASES
 
     hub = DockerManager(repository=repository, namespace=namespace,
                         search=is_search,
@@ -240,46 +275,27 @@ def main():
     if args.verbose and not is_search:
         hub.print_namespace()
 
+# Handle search
+
     if is_search:
         print("Searching Docker Hub repository for: %s\n" % args.repository)
 
-# Handle search
-
-    if args.command == 'search':
         if args.count:
             hub.print_nof_search_results(query=args.repository)
         else:
             search = hub.search(query=args.repository, page_lim=args.number)
-            proc = subprocess.Popen(pager, shell=True, stdin=subprocess.PIPE)
-            try:
-                with io.TextIOWrapper(proc.stdin) as pipe:
-                    for res in search:
-                        try:
-                            pipe.write(res + '\n')
-                        except KeyboardInterrupt:
-                            # Abandon rest of the results
-                            # Note: pager is still in control of the terminal
-                            pass
-            except BrokenPipeError:
-                pass  # Ignore broken pipe error
-            while True:
-                try:
-                    proc.wait()
-                    break
-                except KeyboardInterrupt:
-                    # Ignore ctrl-c to exit pager properly
-                    pass
+            _pager("\n".join(search))
 
 # Handle repository
 
-    elif args.command == 'repository':
+    elif args.command in REPOSITORY_ALIASES:
         if args.size or args.full_size:
             hub.print_repo_size(full=args.full_size)
 
 
 # Handle description
 
-    elif args.command == 'description':
+    elif args.command in DESCRIPTION_ALIASES:
         args.short = not args.long
         if args.full:
             args.long = args.short
@@ -288,7 +304,7 @@ def main():
 
 # Handle tags
 
-    elif args.command == 'tags':
+    elif args.command in TAGS_ALIASES:
 
         args.format = 'plain' if not args.pretty else 'pretty'
 
