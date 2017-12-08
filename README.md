@@ -99,5 +99,4 @@ This is not possible at the moment, but will be in the bright future.
 - pass tags to operate on with `namespace/repo:tag`
 - create interactive session so that user could login only once
 - consider implementing parent parser
-- consider allowing abbreviations
 - think of another implementation instead of millions of ifs...

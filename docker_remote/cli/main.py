@@ -10,12 +10,6 @@ import docker_remote
 from docker_remote.manager import DockerManager
 from docker_remote.cli import pager
 
-# Aliases
-REPOSITORY_ALIASES = ['repository', 'repo', 'r']
-SEARCH_ALIASES = ['search', 's']
-DESCRIPTION_ALIASES = ['description', 'des', 'd']
-TAGS_ALIASES = ['tags', 't']
-
 
 def _init_logger():
     # TODO
@@ -54,7 +48,13 @@ def _init_pager() -> pager.Pager:
 
 
 def main():
-    # Bring logging stuff up
+    # Bring logging stuff up ASAP
+
+    # Aliases
+    repository_alias = ['repository', 'repo', 'r']
+    search_alias = ['search', 's']
+    description_alias = ['description', 'des', 'd']
+    tag_alias = ['tags', 't']
 
     # Initialize argument parser
     parser = argparse.ArgumentParser(
@@ -83,7 +83,7 @@ def main():
                                        description="Docker Manager sub commands")
 
     parser_repo = subparsers.add_parser('repository',
-                                        aliases=REPOSITORY_ALIASES,
+                                        aliases=repository_alias,
                                         help="Manage Docker Hub repository information")
 
     parser_repo.add_argument(
@@ -97,7 +97,7 @@ def main():
     )
 
     # Search parser for search sub command
-    parser_search = subparsers.add_parser('search', aliases=SEARCH_ALIASES,
+    parser_search = subparsers.add_parser('search', aliases=search_alias,
                                           help="Search Docker Hub repository")
     parser_search.add_argument(
         '-c', '--count', action='store_true',
@@ -112,7 +112,7 @@ def main():
 
     # Sub parser for description sub command
     parser_description = subparsers.add_parser('description',
-                                               aliases=DESCRIPTION_ALIASES,
+                                               aliases=description_alias,
                                                help="Manage Docker Hub "
                                                     "repository description")
 
@@ -144,7 +144,7 @@ def main():
     )
 
     # Sub parser for tags sub command
-    parser_tags = subparsers.add_parser('tags', aliases=TAGS_ALIASES,
+    parser_tags = subparsers.add_parser('tags', aliases=tag_alias,
                                         formatter_class=argparse.RawTextHelpFormatter,
                                         help="Manage Docker Hub repository tags")
 
@@ -265,7 +265,7 @@ def main():
         username, password = None, None
 
     # Necessary to avoid creating repository
-    is_search = args.command in SEARCH_ALIASES
+    is_search = args.command in search_alias
 
     hub = DockerManager(repository=repository, namespace=namespace,
                         search=is_search,
@@ -288,14 +288,14 @@ def main():
 
 # Handle repository
 
-    elif args.command in REPOSITORY_ALIASES:
+    elif args.command in repository_alias:
         if args.size or args.full_size:
             hub.print_repo_size(full=args.full_size)
 
 
 # Handle description
 
-    elif args.command in DESCRIPTION_ALIASES:
+    elif args.command in description_alias:
         args.short = not args.long
         if args.full:
             args.long = args.short
@@ -304,7 +304,7 @@ def main():
 
 # Handle tags
 
-    elif args.command in TAGS_ALIASES:
+    elif args.command in tag_alias:
 
         args.format = 'plain' if not args.pretty else 'pretty'
 
