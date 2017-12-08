@@ -1,7 +1,6 @@
 """Docker Remote Repository - remote docker repository handler"""
 
 
-# TODO subclass dict and add attribute getter and setter
 class Tag(dict):
     """Docker tag object"""
     def __init__(self, dct: dict, namespace: str, repo: str):

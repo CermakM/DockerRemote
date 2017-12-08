@@ -4,6 +4,8 @@ import argparse
 import os
 import sys
 
+import logging
+import tempfile
 import textwrap
 
 import docker_remote
@@ -11,9 +13,46 @@ from docker_remote.manager import DockerManager
 from docker_remote.cli import pager
 
 
-def _init_logger():
-    # TODO
-    pass
+LOG = logging.getLogger('docker-remote')
+DEBUG = bool(os.environ.get('DEBUG')) or False
+
+
+def _init_logger(debug=False):
+    """
+    Initialize logger
+    :param debug: show debugging messages (default False)
+    """
+    # set up logging to file - see previous section for more details
+    fd, logfile = tempfile.mkstemp(prefix='docker-remote_', suffix='.log')
+    logging.basicConfig(level=logging.DEBUG,
+                        format='%(asctime)s - %(name)-12s - [%(levelname)-8s]: %(message)s',
+                        datefmt='%m-%d %H:%M',
+                        filename=logfile,
+                        filemode='w')
+
+    if debug:
+        sys.stdout.write("logging file: %s\n" % logfile)
+
+    LOG.setLevel(logging.DEBUG)
+
+    # log_format_string = '%(asctime)s - %(name)s - [%(levelname)s]: %(message)s'
+
+    # Set up file handler to handle even debug messages
+    log_level = logging.DEBUG
+    # file_handler = logging.FileHandler('debug.log')
+    # file_handler.setFormatter(logging.Formatter(log_format_string))
+    # file_handler.setLevel(log_level)
+
+    # Set up stream handler to handle higher log level unless debug
+    if not debug:
+        log_level = logging.INFO
+    stream_handler = logging.StreamHandler(sys.stderr)
+    stream_handler.setLevel(log_level)
+
+    # LOG.addHandler(file_handler)
+    LOG.addHandler(stream_handler)
+
+    LOG.debug("logging initialized")
 
 
 def _init_pager() -> pager.Pager:
@@ -49,6 +88,7 @@ def _init_pager() -> pager.Pager:
 
 def main():
     # Bring logging stuff up ASAP
+    _init_logger(debug=DEBUG)
 
     # Aliases
     repository_alias = ['repository', 'repo', 'r']
@@ -235,8 +275,6 @@ def main():
         help="Namespace and repository specification in format 'namespace/repository'"
     )
 
-    # TODO lots of other stuff
-
     # Initialize
     # ----------
 
@@ -255,9 +293,9 @@ def main():
     else:
         repository, = repository_split
         if args.verbose:
-            print("[WARNING]: namespace not provided, "
-                  "searching for official repositories",
-                  file=sys.stderr)
+            LOG.info("namespace not provided, "
+                     "searching for official repositories",
+                     file=sys.stderr)
 
     if args.login is not None:
         username, password = args.login.split(':')
@@ -270,7 +308,7 @@ def main():
     hub = DockerManager(repository=repository, namespace=namespace,
                         search=is_search,
                         username=username, password=password,
-                        verbose=args.verbose, debug=True)  # FIXME - turn off debug
+                        verbose=args.verbose, debug=DEBUG)  # FIXME - turn off debug
 
     if args.verbose and not is_search:
         hub.print_namespace()
@@ -278,7 +316,7 @@ def main():
 # Handle search
 
     if is_search:
-        print("Searching Docker Hub repository for: %s\n" % args.repository)
+        LOG.info("Searching Docker Hub repository for: %s\n" % args.repository)
 
         if args.count:
             hub.print_nof_search_results(query=args.repository)
@@ -312,15 +350,15 @@ def main():
             reverse = True if args.pop_front else False
 
             if not any([args.tag, args.number, args.keep, args.all]):
-                parser.error("argument missing, choose from "
-                             "[--tag, --number, --keep, --all])")
+                LOG.error("argument missing, choose from "
+                          "[--tag, --number, --keep, --all])")
             if args.tag:
                 hub.remove_tag(args.tag, confirmation=args.confirm)
             else:
                 if args.keep:
                     repo_tag_count = hub.get_tag_count()
                     if args.keep > repo_tag_count:
-                        print("There are no tags to be removed")
+                        LOG.info("There are no tags to be removed")
                         exit(0)
                     n = repo_tag_count - args.keep
                 else:

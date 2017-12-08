@@ -1,14 +1,15 @@
 """Docker Remote Analyser - Handle remote docker repository"""
 
-# Request libs
 import json
-
+import logging
 import urllib3
 
 from docker_remote.core.repository import DockerRepository, Tag
 
 DOCKER_BASE_URL = 'https://hub.docker.com/v2/'
 DOCKER_LOGIN_URL = 'https://hub.docker.com/v2/users/login/'
+
+LOG = logging.getLogger('docker-remote.analyser')
 
 
 class DockerAnalyser:
@@ -70,14 +71,14 @@ class DockerAnalyser:
         query = "{url}/?page={page}&query={query}".format(url=search_url,
                                                           page=page, query=query)
 
+        LOG.debug("Performing search for query: %s", query)
+
         self.response = self.http.request('GET', query)
         self._check_response()
 
         json_response = json.loads(self.response.data.decode('utf-8'))
         count = json_response['count']
         results = json_response['results']
-
-        # TODO handle multiple pages
 
         repo_list = [None] * len(results)
         "List of tuples: (repo_name, short_description)"

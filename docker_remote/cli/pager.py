@@ -1,12 +1,16 @@
 """A collection of different types of pagers"""
 
 import io
+import logging
 import sys
 
 from abc import ABCMeta, abstractmethod
 
 
-def _escape_stdout(text):
+LOG = logging.getLogger('docker-remote.pager')
+
+
+def _escape_stdout(text) -> str:
     """
     Escape non-encodable characters
     :param text: text stream
@@ -43,8 +47,8 @@ class PlainPager(Pager):
             try:
                 sys.stdout.write(_escape_stdout(arg))
             except (TypeError, AttributeError):
-                print("[ERROR] Cannot convert {arg} to string ... SKIPPED"
-                      .format(arg=arg), file=sys.stderr)
+                LOG.debug("Cannot convert {arg} to string ... SKIPPED"
+                          .format(arg=arg), file=sys.stderr)
                 pass
 
 
@@ -69,9 +73,9 @@ class PipePager(Pager):
             # Ensure string
             try:
                 stream = _escape_stdout(arg)
-            except TypeError:
-                print("[ERROR] Cannot convert {arg} to string ... SKIPPED"
-                      .format(arg=arg), file=sys.stderr)
+            except (TypeError, AttributeError):
+                LOG.debug("Cannot convert {arg} to string ... SKIPPED"
+                          .format(arg=arg), file=sys.stderr)
                 continue
 
             proc = subprocess.Popen(self.cmd, shell=True, stdin=subprocess.PIPE)
@@ -101,5 +105,7 @@ class TTYPager(Pager):
         super(TTYPager, self).__init__()
 
     def __call__(self, *args, **kwargs):
-        # TODO
-        pass
+
+        # TODO: atm just use plain pager
+
+        PlainPager.__call__(*args, **kwargs)
