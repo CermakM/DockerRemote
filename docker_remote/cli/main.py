@@ -22,8 +22,8 @@ def _init_logger(debug=False):
     Initialize logger
     :param debug: show debugging messages (default False)
     """
-    # set up logging to file - see previous section for more details
     fd, logfile = tempfile.mkstemp(prefix='docker-remote_', suffix='.log')
+
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s - %(name)-12s - [%(levelname)-8s]: %(message)s',
                         datefmt='%m-%d %H:%M',
@@ -35,13 +35,8 @@ def _init_logger(debug=False):
 
     LOG.setLevel(logging.DEBUG)
 
-    # log_format_string = '%(asctime)s - %(name)s - [%(levelname)s]: %(message)s'
-
     # Set up file handler to handle even debug messages
     log_level = logging.DEBUG
-    # file_handler = logging.FileHandler('debug.log')
-    # file_handler.setFormatter(logging.Formatter(log_format_string))
-    # file_handler.setLevel(log_level)
 
     # Set up stream handler to handle higher log level unless debug
     if not debug:
@@ -49,7 +44,6 @@ def _init_logger(debug=False):
     stream_handler = logging.StreamHandler(sys.stderr)
     stream_handler.setLevel(log_level)
 
-    # LOG.addHandler(file_handler)
     LOG.addHandler(stream_handler)
 
     LOG.debug("logging initialized")
